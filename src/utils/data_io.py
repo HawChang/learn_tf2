@@ -78,7 +78,10 @@ def read_from_file(file_path, read_func=lambda x:x, encoding="utf-8"):
     word_list = list()
     with codecs.open(file_path, "r", encoding) as rf:
         for line in rf:
-            word_list.append(read_func(line.strip("\n")))
+            data = read_func(line.strip("\n"))
+            if data is None:
+                continue
+            word_list.append(data)
     return word_list
 
 
@@ -89,6 +92,7 @@ def write_to_file(text_list, dst_file_path, write_func=lambda x:x, encoding="utf
     """
     with codecs.open(dst_file_path, "w", encoding) as wf:
         wf.write("\n".join([write_func(x) for x in text_list]))
+    log.debug('write {} lines to file: {}'.format(len(text_list), dst_file_path))
 
 
 def load_pkl(pkl_path):

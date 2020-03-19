@@ -44,7 +44,6 @@ class LstmAttModel(tf.keras.Model):
 
 
 def main():
-    
     model = LstmAttModel(10, vocab_size=1000, emb_size=128)
     model.summary()
 

@@ -6,6 +6,7 @@
 # @Desc   : 
 
 
+import os
 import gensim
 import numpy as np
 
@@ -25,7 +26,7 @@ def train_word2vec(file_path, vec_path, previous_vec_path=None, size=100, window
     """
     # 读取分词后的文本
     sentences = gensim.models.word2vec.LineSentence(file_path)
-    if previous_vec_path is None:
+    if previous_vec_path is None or not os.path.exists(previous_vec_path):
         # 训练模型
         model = gensim.models.Word2Vec(sentences, size=size, window=window, min_count=min_count, workers=workers)
     else:

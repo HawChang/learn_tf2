@@ -10,6 +10,28 @@ import os
 import gensim
 import numpy as np
 
+from data_io import get_data
+
+
+def train_word2vec_by_dir(data_dir, vec_path, read_func=lambda x: x, previous_vec_path=None,
+                          size=100, window=5, min_count=2, workers=4, epochs=5):
+    """
+    根据指定的数据集地址和文本读取函数
+    :param data_dir:
+    :param vec_path: str，词向量存储地址
+    :param read_func:
+    :param previous_vec_path: str, 之前的词向量模型地址, 如果有，则加载该模型继续训练
+    :param size: int，词向量维度
+    :param window: int，窗口大小
+    :param min_count: int，词频率阈值
+    :param workers: int，并行数
+    :param epochs: int, 训练轮数
+    :return: None
+    """
+    sentences = get_data(data_dir, read_func=read_func)
+    # 根据数据训练词向量
+    train_word2vec(sentences, vec_path, previous_vec_path, size, window, min_count, workers, epochs)
+
 
 def train_word2vec_by_file(file_path, vec_path, previous_vec_path=None, size=100, window=5, min_count=2, workers=4, epochs=5):
     """
@@ -54,34 +76,56 @@ def train_word2vec(sentences, vec_path, previous_vec_path=None, size=100, window
     model.save(vec_path)
 
 
-def load_word2vec(vec_path):
+class TokenEncoder(object):
+    def __init__(self, token_id_dict, oov='<unk>'):
+        """
+        初始化token和id的映射
+        :param token_id_dict:
+        :param oov: 未登录词, 这里只是指明oov是哪一个, 需要在训练词向量时有该oov,
+        """
+        self.token_id = token_id_dict
+        assert ' ' not in self.token_id, "token ' ' should not be used, it's reserved for padding"
+        assert 0 not in self.token_id.values(), "token_id 0 should not be used, it's reserved for padding"
+        self.token_id[' '] = 0
+        if oov is not None:
+            assert oov in self.token_id, "oov('{}') not in token, it should exist when training word2vec".format(oov)
+            self.oov_id = self.token_id[oov]
+        self.id_token = {v: k for k, v in self.token_id.items()}
+        self.vocab_size = len(self.token_id)
+
+    def transform(self, token):
+        return self.token_id[token] if token in self.token_id else self.oov_id
     
+    def inverse_transform(self, token_id):
+        return self.id_token[token_id]
+
+
+def load_word2vec(vec_path, oov='<unk>'):
+
     model = gensim.models.Word2Vec.load(vec_path)
     # 获取token列表
-    vocab_list = [word for word, Vocab in model.wv.vocab.items()]  # 存储 所有的 词语
+    token_list = [word for word, _ in model.wv.vocab.items()]  # 存储 所有的 词语
     # 初始化一系列字典
+
     # token_id字典
-    token_index = {' ': 0}  # 初始化 `{token : index}` ，后期 tokenize 语料库就是用该词典。
-    # id_token字典
-    index_token = {0: ' '}  # 初始化`{index : token}`字典
+    token_index = dict()  # 初始化 `{token : index}` ，后期 tokenize 语料库就是用该词典。
+
     # 词向量矩阵
     # emb_matrix[token_id] = token_vec
     # emb_matrix[0]为全零词向量，用于padding
     # 因此矩阵shape=(vocab_size+1, vec_size)
-    emb_matrix = np.zeros((len(vocab_list) + 1, model.vector_size))
-    
+    emb_matrix = np.zeros((len(token_list) + 1, model.vector_size))
+
     # 更新一系列字典
-    for i in range(len(vocab_list)):
-        # 当前token
-        token = vocab_list[i]
+    for index, token in enumerate(token_list):
         # 更新token_id字典
-        token_index[token] = i + 1
-        # 更新id_token字典
-        index_token[i+1] = token
+        token_index[token] = index + 1
         # 更新词向量矩阵
-        emb_matrix[i + 1] = model.wv[token]
-    
-    return token_index, index_token, emb_matrix
+        emb_matrix[index + 1] = model.wv[token]
+
+    token_encoder = TokenEncoder(token_index, oov)
+
+    return token_encoder, emb_matrix
 
 
 def _test_word2vec(vec_path):
@@ -104,15 +148,12 @@ def _test_word2vec(vec_path):
 
 
 if __name__ == '__main__':
-    seg_data_path = './output/data.txt'
-    vec_path = './output/word2vec_128d'
-    pre_vec_path = './output/word2vec_128d'
-    
-    train_word2vec(
-        file_path=seg_data_path,
-        vec_path=vec_path,
-        previous_vec_path=pre_vec_path,
-        epochs=20)
-    
-    _test_word2vec(vec_path)
-    pass
+    import config
+
+    train_word2vec_by_dir(
+        data_dir=config.preprocessed_data_dir,
+        vec_path=config.word2vec_path,
+        previous_vec_path=config.pre_word2vec_path,
+        epochs=config.word2vec_epochs)
+
+    _test_word2vec(config.word2vec_path)

@@ -7,6 +7,8 @@
 
 import os
 
+
+# ----------- 预处理阶段 ------------
 # 源数据文件夹
 origin_data_dir = './data/jinyong/'
 
@@ -33,29 +35,53 @@ origin_file_name_dict={
 # 预处理后，各行数据格式为:书名\t该行句子切词结果(空白格分隔)
 preprocessed_data_dir = './data/jinyong_processed/'
 
+# ----------- 训练验证集划分阶段 ------------
+# 划分验证集占比
+test_ratio = 0.15
+
+# 划分时是否打乱顺序
+shuffle = True
+
 # 数据集分训练集和测试集
 intermediate_data_dir = './data/'
 train_data_path = os.path.join(intermediate_data_dir, 'train_data.txt')
 val_data_path = os.path.join(intermediate_data_dir, 'val_data.txt')
 
+# ----------- 词向量生成阶段 ------------
+# 词向量维度
 emb_size = 128
+
+# 词向量训练轮数
+word2vec_epochs = 10
+
+# 未登录词
+# 设置的未登录词需要在训练词向量的语料里存在
+# 例如 oov='<unk>' 则训练的语料里应该有token '<unk>'
+# None表示没有
+oov = None
+
 # 词向量文件地址
 model_dir = './model'
 word2vec_path = os.path.join(model_dir, 'word2vec_{}d'.format(emb_size))
+pre_word2vec_path = word2vec_path
 
+# ----------- 类别id映射阶段 ------------
 # 类别名称id转换信息
 label_encoder_path = os.path.join(model_dir, 'label_encoder.pkl')
 
+# ----------- 模型训练阶段 ------------
 
 # 批处理大小
 batch_size = 128
+
+# 训练轮数
 epochs = 5
+
+# LSTM神经元数
 lstm_size = 128
 
-# 模型保存的参数
+# 模型保存文件前缀
 ckpt_prefix = 'model.ckpt'
-max_to_keep = 5
 
-# 训练集测试集划分
-test_ratio = 0.15
-shuffle = True
+# 保存模型数目上限
+max_to_keep = 5

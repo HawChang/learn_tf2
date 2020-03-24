@@ -44,7 +44,7 @@ class JinYongArticleClassifier(object):
         :param expect_partial: true则确定模型参数并未全部用到
         """
         # 模型依赖word2vec和label_encoder
-        
+
         if preprocess:
             JinYongArticleClassifier.preprocess(config.origin_data_dir, config.preprocessed_data_dir)
 
@@ -60,12 +60,12 @@ class JinYongArticleClassifier(object):
                                   previous_vec_path=config.pre_word2vec_path,
                                   size=config.emb_size,
                                   epochs=config.word2vec_epochs)
-        
+
         log.info("load word2vec...")
         self.token_encoder, self.emb_mat = load_word2vec(config.word2vec_path, config.oov)
         log.info("emb matrix shape: {}".format(self.emb_mat.shape))
         log.info("vocab size = {}".format(self.token_encoder.vocab_size))
-        
+
         # 加载label_encoder
         if gen_label_encode:
             log.info('gen label_encoder...')
@@ -75,7 +75,7 @@ class JinYongArticleClassifier(object):
         self.label_encoder = load_pkl(config.label_encoder_path)
         log.info("class num = {}".format(self.label_encoder.classes_))
         log.info("classes: {}".format(self.label_encoder.classes_))
-        
+
         # 加载model
         self.model = LstmAttModel(
             class_num=len(self.label_encoder.classes_),
@@ -217,7 +217,7 @@ class JinYongArticleClassifier(object):
             token_seq = [self.token_encoder.transform(token) for token in data.split(' ')]
             label = self.label_encoder.transform([label])[0]
             return token_seq, label
-    
+
         data_list = get_data(data_path, read_func=line_process, encoding=encoding)
         batch_num = math.ceil(len(data_list) / float(batch_size))
         train_ds = tf.data.Dataset.from_generator(
@@ -250,7 +250,7 @@ class JinYongArticleClassifier(object):
             self.train_accuracy.reset_states()
             self.val_loss.reset_states()
             self.val_accuracy.reset_states()
-        
+
             for cur_batch, (batch_seq, batch_label) in enumerate(train_ds):
                 self.train_step(batch_seq, batch_label)
                 log.info('Epoch {}, train batch({}/{}): loss {:.6f}, acc: {:.2f}%'.format(
@@ -259,13 +259,13 @@ class JinYongArticleClassifier(object):
                     train_batch_num,
                     self.train_loss.result(),
                     self.train_accuracy.result() * 100))
-        
+
             for batch_seq, batch_label in val_ds:
                 self.val_step(batch_seq, batch_label)
-        
+
             total_val_loss = self.val_loss.result()
             total_val_acc = self.val_accuracy.result()
-        
+
             log.info('Epoch {}, val loss {:.6f}, acc: {:.2f}%'.format(
                 epoch + 1,
                 total_val_loss,
@@ -323,7 +323,7 @@ class JinYongArticleClassifier(object):
 
 
 def main():
-    
+
     classifier = JinYongArticleClassifier(
         preprocess=False,
         split_train_test=False,
@@ -332,10 +332,10 @@ def main():
         expect_partial=True,
     )
 
-    #classifier.train(
-    #    train_data_path=config.train_data_path,
-    #    val_data_path=config.val_data_path,
-    #)
+    classifier.train(
+        train_data_path=config.train_data_path,
+        val_data_path=config.val_data_path,
+    )
 
     classifier.check_att(
         val_data_path=config.val_data_path,

@@ -9,6 +9,29 @@
 import tensorflow as tf
 
 
+class SelfAttention(tf.keras.Model):
+    def __init__(self, units=256):
+        super(SelfAttention, self).__init__()
+        self.Wq = tf.keras.layers.Dense(units)
+        self.Wk = tf.keras.layers.Dense(units)
+        self.Wv = tf.keras.layers.Dense(units)
+        self.units = units
+    
+    def call(self, inputs):
+        # query shape = [batch_size, seq_length, hidden_size]
+        q = self.Wq(inputs)
+        k = self.Wk(inputs)
+        v = self.Wv(inputs)
+        
+        attention_weights = tf.nn.softmax(tf.matmul(q, tf.transpose(k, perm=[0, 2, 1])) / (self.units ** 0.5), axis=1)
+        # print("attention shape = {}".format(attention_weights.shape))
+        
+        context_vector = tf.matmul(attention_weights, v)
+        # print("context_vector shape = {}".format(context_vector.shape))
+        
+        return context_vector, attention_weights
+
+
 class BahdanauAttention(tf.keras.Model):
     def __init__(self, units=256):
         super(BahdanauAttention, self).__init__()
@@ -92,4 +115,6 @@ class AttentionLayer(tf.keras.Model):
 
 
 if __name__ == "__main__":
+    att = SelfAttention(10)
+    att(tf.ones((32, 128)))
     pass

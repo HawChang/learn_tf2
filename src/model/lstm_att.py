@@ -8,7 +8,7 @@
 
 import tensorflow as tf
 
-from att_layers import BahdanauAttention
+from att_layers import SelfAttention
 
 
 class LstmAttModel(tf.keras.Model):
@@ -24,23 +24,22 @@ class LstmAttModel(tf.keras.Model):
             self.emb = tf.keras.layers.Embedding(self.vocab_size, self.emb_size)  # [batch_size, seq_length, emb_size]
         else:
             self.emb = tf.keras.layers.Embedding(self.vocab_size, self.emb_size, weights=[emb_matrix], trainable=False) # [batch_size, seq_length, emb_size]
-        self.lstm = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(hidden_num, return_sequences=True))
-        # self.att = tf.keras.layers.Attention()
-        self.att = BahdanauAttention(128)
+        self.lstm = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(hidden_num, return_sequences=False))
+        self.att = SelfAttention(128)
         self.dense = tf.keras.layers.Dense(self.class_num, activation='relu')
-        #self.pool = tf.keras.layers.GlobalAveragePooling1D()
 
     def call(self, inputs):
         x = self.emb(inputs)  # [batch_size, seq_length, emb_size]
-        #print("emb output shape: %s" % str(x.shape))
+        print("emb output shape: %s" % str(x.shape))
+
+        x, att_weights = self.att(x)
+        print("att output shape: %s" % str(x.shape))
+        
         x = self.lstm(x)  # [batch_size, seq_length, hidden_num * 2]
-        #print("lstm output shape: %s" % str(x.shape))
-        x, att_weights = self.att(x, x)
-        #print("att output shape: %s" % str(x.shape))
-        #x = self.pool(x)
-        #print("pool output shape: %s" % str(x.shape))
+        print("lstm output shape: %s" % str(x.shape))
+        
         x = self.dense(x)  # [batch_size, class_num]
-        #print("dense output shape: %s" % str(x.shape))
+        print("dense output shape: %s" % str(x.shape))
         return x, att_weights
 
 

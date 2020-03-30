@@ -34,12 +34,14 @@ class JinYongArticleClassifier(object):
                  split_train_test=False,
                  gen_word2vec=False,
                  gen_label_encode=False,
+                 reload_model=False,
                  expect_partial=False):
         """
         模型初始化
         :param preprocess: true则对原始数据预处理
         :param split_train_test: true则划分训练验证集
         :param gen_word2vec: true则训练词向量
+        :param reload_model: true则载入已有模型参数
         :param gen_label_encode: true则生成新的标签id映射
         :param expect_partial: true则确定模型参数并未全部用到
         """
@@ -87,9 +89,10 @@ class JinYongArticleClassifier(object):
         self.optimizer = tf.keras.optimizers.Adam()
 
         checkpoint = tf.train.Checkpoint(lstm_att_model=self.model, lstm_att_optimizer=self.optimizer)
-        res = checkpoint.restore(tf.train.latest_checkpoint(config.model_dir))
-        if expect_partial:
-            res.expect_partial()
+        if reload_model:
+            res = checkpoint.restore(tf.train.latest_checkpoint(config.model_dir))
+            if expect_partial:
+                res.expect_partial()
 
         self.manager = tf.train.CheckpointManager(
             checkpoint,
@@ -329,6 +332,7 @@ def main():
         split_train_test=False,
         gen_word2vec=False,
         gen_label_encode=False,
+        reload_model=False,
         expect_partial=True,
     )
 

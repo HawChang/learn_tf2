@@ -7,6 +7,7 @@
 
 
 import os
+
 import gensim
 import numpy as np
 
@@ -87,6 +88,7 @@ class TokenEncoder(object):
         assert ' ' not in self.token_id, "token ' ' should not be used, it's reserved for padding"
         assert 0 not in self.token_id.values(), "token_id 0 should not be used, it's reserved for padding"
         self.token_id[' '] = 0
+        self.oov_id = self.token_id[' ']
         if oov is not None:
             assert oov in self.token_id, "oov('{}') not in token, it should exist when training word2vec".format(oov)
             self.oov_id = self.token_id[oov]

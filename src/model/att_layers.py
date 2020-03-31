@@ -16,19 +16,19 @@ class SelfAttention(tf.keras.Model):
         self.Wk = tf.keras.layers.Dense(units)
         self.Wv = tf.keras.layers.Dense(units)
         self.units = units
-    
+
     def call(self, inputs):
         # query shape = [batch_size, seq_length, hidden_size]
         q = self.Wq(inputs)
         k = self.Wk(inputs)
         v = self.Wv(inputs)
-        
+
         attention_weights = tf.nn.softmax(tf.matmul(q, tf.transpose(k, perm=[0, 2, 1])) / (self.units ** 0.5), axis=1)
         # print("attention shape = {}".format(attention_weights.shape))
-        
+
         context_vector = tf.matmul(attention_weights, v)
         # print("context_vector shape = {}".format(context_vector.shape))
-        
+
         return context_vector, attention_weights
 
 
@@ -42,7 +42,7 @@ class BahdanauAttention(tf.keras.Model):
     def call(self, query, values):
         # query shape = [batch_size, seq_length, hidden_num * 2]
         # values shape = [batch_size, seq_length, hidden_num * 2]
-        
+
         # encoder_image_features shape [batch_size, 64, encoder_image_dim]
         # caption shape [batch_size, caption_embedding_dim]
 
@@ -61,7 +61,7 @@ class BahdanauAttention(tf.keras.Model):
         # attention_weights shape == [batch_size, seq_length, 1]
         attention_weights = tf.nn.softmax(score, axis=1)
         #print("att_weights shape = %s" % str(attention_weights.shape))
-        
+
         # context_vector shape after sum == [batch_size, hidden size]
         context_vector = attention_weights * values
         context_vector = tf.reduce_sum(context_vector, axis=1)
@@ -77,7 +77,7 @@ class AttentionLayer(tf.keras.Model):
         self.method = method
         self.W_a = tf.keras.layers.Dense(units)
         self.v_a = tf.keras.layers.Dense(1)
-    
+
     def call(self, dec_h_t, enc_h_s):
         """
         Args:
@@ -87,11 +87,11 @@ class AttentionLayer(tf.keras.Model):
         Returns:
             context_vector: (batch_size, units)
         """
-        
+
         # concat_h = tf.concat([dec_h_t, enc_h_s], axis=1)
         # concat_h = tf.reshape(concat_h, [concat_h.shape[0] * concat_h.shape[1], concat_h.shape[2]])
         # print('concat_h shape:', concat_h.shape)
-        
+
         # score shape == (batch_size, seq_len, 1)
         if self.method == 'concat':
             score = self.v_a(tf.nn.tanh(self.W_a(dec_h_t + enc_h_s)))
@@ -99,18 +99,18 @@ class AttentionLayer(tf.keras.Model):
             score = tf.matmul(self.W_a(enc_h_s), dec_h_t, transpose_b=True)
         elif self.method == 'dot':
             score = tf.matmul(enc_h_s, dec_h_t, transpose_b=True)
-        
+
         # a_t shape == (batch_size, seq_len, 1)
         a_t = tf.nn.softmax(score, axis=1)
-        
+
         # TODO: replace matmul operator with multiply operator
         # tf.matmul(a_t, enc_h_s, transpose_a=True) -> a_t * enc_h_s
         # result shape after * operation: (batch_size, seq_len, units)
-        
+
         # (batch_size, 1, units)
         # context_vector shape == (batch_size, units)
         context_vector = tf.reduce_sum(a_t * enc_h_s, axis=1)
-        
+
         return context_vector
 
 

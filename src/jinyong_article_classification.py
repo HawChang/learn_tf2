@@ -9,6 +9,10 @@ import math
 import os
 import sys
 
+_cur_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append("%s/utils/" % _cur_dir)
+sys.path.append("%s/model/" % _cur_dir)
+
 import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
@@ -20,10 +24,6 @@ from utils.data_io import get_file_name_list, get_data, load_pkl, dump_pkl, writ
 from utils.logger import Logger
 from utils.seg import line_seg
 from utils.word2vec import train_word2vec_by_dir, load_word2vec
-
-_cur_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append("%s/utils/" % _cur_dir)
-sys.path.append("%s/model/" % _cur_dir)
 
 log = Logger().get_logger()
 
@@ -160,7 +160,7 @@ class JinYongArticleClassifier(object):
         labels = get_data(config.train_data_path, read_func=lambda x:x.split('\t')[0])
         label_encoder = LabelEncoder()
         label_encoder.fit(labels)
-        dump_pkl(label_encoder, config.label_encoder_path, overwrite=config.re_encode_label)
+        dump_pkl(label_encoder, config.label_encoder_path, overwrite=True)
 
     @tf.function(input_signature=(
             tf.TensorSpec(shape=[None, None], dtype=tf.int32),
@@ -329,9 +329,9 @@ def main():
 
     classifier = JinYongArticleClassifier(
         preprocess=False,
-        split_train_test=False,
-        gen_word2vec=False,
-        gen_label_encode=False,
+        split_train_test=True,
+        gen_word2vec=True,
+        gen_label_encode=True,
         reload_model=False,
         expect_partial=True,
     )

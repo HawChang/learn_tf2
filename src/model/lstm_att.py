@@ -10,7 +10,6 @@ import tensorflow as tf
 
 from att_layers import SelfAttention
 
-
 class LstmAttModel(tf.keras.Model):
     def __init__(self, class_num, vocab_size, emb_size, emb_matrix=None, hidden_num=256):
         super().__init__()
@@ -34,19 +33,15 @@ class LstmAttModel(tf.keras.Model):
 
         x, att_weights = self.att(x)
         print("att output shape: %s" % str(x.shape))
-        
+
         x = self.lstm(x)  # [batch_size, seq_length, hidden_num * 2]
         print("lstm output shape: %s" % str(x.shape))
-        
+
         x = self.dense(x)  # [batch_size, class_num]
         print("dense output shape: %s" % str(x.shape))
         return x, att_weights
 
 
-def main():
+if __name__ == "__main__":
     model = LstmAttModel(10, vocab_size=1000, emb_size=128)
     model.summary()
-
-
-if __name__ == "__main__":
-    main()
